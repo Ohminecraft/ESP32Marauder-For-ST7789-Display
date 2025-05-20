@@ -36,63 +36,23 @@ uint8_t Display::updateTouch(uint16_t *x, uint16_t *y, uint16_t threshold) {
   #ifdef HAS_ST7789
     if (!this->headless_mode) {
       //uint16_t bx_raw, by_raw;
-      #ifndef HAS_CYD_TOUCH
-        uint16_t tx = 0, ty = 0;
-        this->tft.getTouch(&tx, &ty, threshold);
-        Serial.printf("Touch tX: %d, tY: %d\n", tx, ty);
-        uint8_t rot = this->tft.getRotation();
-        switch (rot) {
-            case 0: // Standard Protrait
-              *x = map(tx, 200, 3700, 1, TFT_WIDTH);
-              *y = map(ty, 240, 3800, 1, TFT_HEIGHT);
-              break;
-            case 1:
-              *x = map(ty, 143, 3715, 0, TFT_HEIGHT);     // Horizontal (Y axis in touch, X on screen)
-              *y = map(tx, 3786, 216, 0, TFT_WIDTH);    // Vertical (X axis in touch, Y on screen)
-              break;
-            case 2:
-              *x = map(tx, 3700, 200, 1, TFT_WIDTH);
-              *y = map(ty, 3800, 240, 1, TFT_HEIGHT);
-              break;
-            case 3:
-              *x = map(ty, 3800, 240, 1, TFT_WIDTH);
-              *y = map(tx, 200, 3700, 1, TFT_HEIGHT);
-              break;
-          }
-          Serial.printf("Touch X: %d, Y: %d\n", *x, *y);
-          return 1;
-      #else
-        if (this->touchscreen.tirqTouched() && this->touchscreen.touched()) {
-          TS_Point p = this->touchscreen.getPoint();
-
-          //*x = map(p.x, 200, 3700, 1, TFT_WIDTH);
-          //*y = map(p.y, 240, 3800, 1, TFT_HEIGHT);
-
-          uint8_t rot = this->tft.getRotation();
-
-          switch (rot) {
-            case 0: // Standard Protrait
-              *x = map(p.x, 200, 3700, 1, TFT_WIDTH);
-              *y = map(p.y, 240, 3800, 1, TFT_HEIGHT);
-              break;
-            case 1:
-              *x = map(p.y, 143, 3715, 0, TFT_HEIGHT);     // Horizontal (Y axis in touch, X on screen)
-              *y = map(p.x, 3786, 216, 0, TFT_WIDTH);    // Vertical (X axis in touch, Y on screen)
-              break;
-            case 2:
-              *x = map(p.x, 3700, 200, 1, TFT_WIDTH);
-              *y = map(p.y, 3800, 240, 1, TFT_HEIGHT);
-              break;
-            case 3:
-              *x = map(p.y, 3800, 240, 1, TFT_WIDTH);
-              *y = map(p.x, 200, 3700, 1, TFT_HEIGHT);
-              break;
-          }
-          return 1;
-        }
-        else
-          return 0;
-      #endif
+      uint16_t tx = 0, ty = 0;
+      if(!this->tft.getTouch(&tx, &ty, threshold)) return 0;
+      uint8_t rot = this->tft.getRotation();
+      switch (rot) {
+        case 0:
+          *x = (uint16_t) map(tx, 240, 0, 1, TFT_WIDTH);
+          *y = (uint16_t) map(ty, 320, 0, 1, TFT_HEIGHT);
+          break;
+        case 1:
+          *x = (uint16_t) map((95 + TFT_WIDTH - tx), 0, TFT_WIDTH, 0, TFT_WIDTH);
+          *y = (uint16_t) map(ty, 0, 216, TFT_HEIGHT, 20);
+          break;
+        case 3:
+          return this->tft.getTouch(x, y, threshold);
+          break;
+      }
+      return 1;
     } else return !this->headless_mode;
   #endif
   return 0;
@@ -434,6 +394,7 @@ void Display::processAndPrintString(TFT_eSPI& tft, const String& originalString)
   uint16_t background_color = TFT_BLACK; // Default background color
 
   String new_string = originalString;
+  Serial.println(new_string);
 
   // Check for color macros at the start of the string
   if (new_string.startsWith(RED_KEY)) {
@@ -474,8 +435,26 @@ void Display::displayBuffer(bool do_clear)
           delay(print_delay_1);
           yDraw = scroll_line(TFT_RED);
           tft.setCursor(xPos, yDraw);
-          tft.setTextColor(TFT_GREEN, TFT_BLACK);
-          tft.print(display_buffer->shift());
+          uint16_t text_color = TFT_GREEN;
+          String new_string = display_buffer->shift();
+          if (new_string.startsWith(RED_KEY)) {
+            text_color = TFT_RED;
+            new_string.remove(0, strlen(RED_KEY)); // Remove the macro
+          } else if (new_string.startsWith(GREEN_KEY)) {
+            text_color = TFT_GREEN;
+            new_string.remove(0, strlen(GREEN_KEY)); // Remove the macro
+          } else if (new_string.startsWith(CYAN_KEY)) {
+            text_color = TFT_CYAN;
+            new_string.remove(0, strlen(CYAN_KEY)); // Remove the macro
+          } else if (new_string.startsWith(WHITE_KEY)) {
+            text_color = TFT_WHITE;
+            new_string.remove(0, strlen(WHITE_KEY)); // Remove the macro
+          } else if (new_string.startsWith(MAGENTA_KEY)) {
+            text_color = TFT_MAGENTA;
+            new_string.remove(0, strlen(MAGENTA_KEY)); // Remove the macro
+          }
+          tft.setTextColor(text_color, TFT_BLACK);
+          tft.print(new_string);
           printing = false;
           delay(print_delay_2);
         }
