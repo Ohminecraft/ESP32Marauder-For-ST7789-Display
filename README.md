@@ -6,6 +6,3 @@
   <b>/!\ Now It On Beta State Not Work Perfectly At All /!\</b>
   <br><br>
   <b>A suite of WiFi/Bluetooth offensive and defensive tools for the ESP32</b>
-  <br><br>
-## Getting Started
-Download the [latest release](https://github.com/justcallmekoko/ESP32Marauder/releases/latest) of the firmware.  
