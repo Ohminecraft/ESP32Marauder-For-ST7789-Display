@@ -36,6 +36,7 @@ uint8_t Display::updateTouch(uint16_t *x, uint16_t *y, uint16_t threshold) {
   #ifdef HAS_ST7789
     if (!this->headless_mode) {
       //uint16_t bx_raw, by_raw;
+      /*
       uint16_t tx = 0, ty = 0;
       if(!this->tft.getTouch(&tx, &ty, threshold)) return 0;
       uint8_t rot = this->tft.getRotation();
@@ -53,6 +54,8 @@ uint8_t Display::updateTouch(uint16_t *x, uint16_t *y, uint16_t threshold) {
           break;
       }
       return 1;
+      */
+      return tft.getTouch(x, y, threshold);
     } else return !this->headless_mode;
   #endif
   return 0;
@@ -89,13 +92,14 @@ void Display::RunSetup()
     tft.setRotation(1);
   #endif
 
+
   tft.setCursor(0, 0);
 
   #ifdef HAS_ST7789
 
     #ifndef HAS_CYD_TOUCH
       #ifdef TFT_SHIELD
-        uint16_t calData[5] = { 275, 3494, 361, 3528, 4 }; // tft.setRotation(0); // Portrait with TFT Shield
+        uint16_t calData[5] = { 456, 3220, 274, 3490, 2 }; // tft.setRotation(0); // Portrait with TFT Shield
         //Serial.println(F("Using TFT Shield"));
       #elif defined(TFT_DIY)
         uint16_t calData[5] = { 339, 3470, 237, 3438, 2 }; // tft.setRotation(0); // Portrait with DIY TFT
@@ -105,7 +109,7 @@ void Display::RunSetup()
     #endif
 
   #endif
-
+  
   //tft.fillScreen(TFT_BLACK);
   clearScreen();
 
@@ -577,8 +581,8 @@ void Display::scrollAddress(uint16_t vsp) {
 
 
 // JPEG_functions
-/*
-void Display::drawJpeg(const char *filename, int xpos, int ypos) {
+
+void Display::drawJpeg(int xpos, int ypos) {
 
   // Open the named file (the Jpeg decoder library will close it after rendering image)
   //fs::File jpegFile = SPIFFS.open( filename, "r");    // File handle reference for SPIFFS
@@ -595,20 +599,16 @@ void Display::drawJpeg(const char *filename, int xpos, int ypos) {
   // the filename can be a String or character array type:
 
   //boolean decoded = JpegDec.decodeFsFile(filename);  // or pass the filename (leading / distinguishes SPIFFS files)
-  boolean decoded = JpegDec.decodeArray(MarauderTitle, MARAUDER_TITLE_BYTES);
-
+  bool decoded = JpegDec.decodeArray(MarauderTitle, MARAUDER_TITLE_BYTES);
   if (decoded) {
-    // print information about the image to the serial port
-    jpegInfo();
-
     // render the image onto the screen at given coordinates
     jpegRender(xpos, ypos);
   }
-  //else {
-  //  Serial.println(F("Jpeg file format not supported!"));
-  //}
+  else {
+    Serial.println("Failed To Draw Logo!");
+  }
 }
-*/
+
 
 /*void Display::setupDraw() {
   this->tft.drawLine(0, 0, 10, 0, TFT_MAGENTA);
@@ -690,38 +690,36 @@ void Display::drawStylus()
 void Display::jpegRender(int xpos, int ypos) {
 
   // retrieve infomration about the image
-  uint16_t  *pImg;
-  int16_t mcu_w = JpegDec.MCUWidth;
-  int16_t mcu_h = JpegDec.MCUHeight;
-  int32_t max_x = JpegDec.width;
-  int32_t max_y = JpegDec.height;
+  uint16_t *pImg;
+  uint16_t mcu_w = JpegDec.MCUWidth;
+  uint16_t mcu_h = JpegDec.MCUHeight;
+  uint32_t max_x = JpegDec.width;
+  uint32_t max_y = JpegDec.height;
 
+  bool swapBytes = tft.getSwapBytes();
+  tft.setSwapBytes(true);
+  
   // Jpeg images are draw as a set of image block (tiles) called Minimum Coding Units (MCUs)
   // Typically these MCUs are 16x16 pixel blocks
   // Determine the width and height of the right and bottom edge image blocks
-  int32_t min_w = minimum(mcu_w, max_x % mcu_w);
-  int32_t min_h = minimum(mcu_h, max_y % mcu_h);
+  uint32_t min_w = jpg_min(mcu_w, max_x % mcu_w);
+  uint32_t min_h = jpg_min(mcu_h, max_y % mcu_h);
 
   // save the current image block size
-  int32_t win_w = mcu_w;
-  int32_t win_h = mcu_h;
-
-  // record the current time so we can measure how long it takes to draw an image
-  uint32_t drawTime = millis();
+  uint32_t win_w = mcu_w;
+  uint32_t win_h = mcu_h;
 
   // save the coordinate of the right and bottom edges to assist image cropping
   // to the screen size
   max_x += xpos;
   max_y += ypos;
 
-  // read each MCU block until there are no more
-  while ( JpegDec.readSwappedBytes()) { // Swapped byte order read
+  // Fetch data from the file, decode and display
+  while (JpegDec.read()) {    // While there is more data in the file
+    pImg = JpegDec.pImage ;   // Decode a MCU (Minimum Coding Unit, typically a 8x8 or 16x16 pixel block)
 
-    // save a pointer to the image block
-    pImg = JpegDec.pImage;
-
-    // calculate where the image block should be drawn on the screen
-    int mcu_x = JpegDec.MCUx * mcu_w + xpos;  // Calculate coordinates of top left corner of current MCU
+    // Calculate coordinates of top left corner of current MCU
+    int mcu_x = JpegDec.MCUx * mcu_w + xpos;
     int mcu_y = JpegDec.MCUy * mcu_h + ypos;
 
     // check if the image block size needs to be changed for the right edge
@@ -735,25 +733,31 @@ void Display::jpegRender(int xpos, int ypos) {
     // copy pixels into a contiguous block
     if (win_w != mcu_w)
     {
-      for (int h = 1; h < win_h-1; h++)
+      uint16_t *cImg;
+      int p = 0;
+      cImg = pImg + win_w;
+      for (int h = 1; h < win_h; h++)
       {
-        memcpy(pImg + h * win_w, pImg + (h + 1) * mcu_w, win_w << 1);
+        p += mcu_w;
+        for (int w = 0; w < win_w; w++)
+        {
+          *cImg = *(pImg + w + p);
+          cImg++;
+        }
       }
     }
 
+    // calculate how many pixels must be drawn
+    uint32_t mcu_pixels = win_w * win_h;
+
     // draw image MCU block only if it will fit on the screen
-    if ( mcu_x < tft.width() && mcu_y < tft.height())
-    {
-      // Now push the image block to the screen
+    if (( mcu_x + win_w ) <= tft.width() && ( mcu_y + win_h ) <= tft.height())
       tft.pushImage(mcu_x, mcu_y, win_w, win_h, pImg);
-    }
-
-    else if ( ( mcu_y + win_h) >= tft.height()) JpegDec.abort();
-
+    else if ( (mcu_y + win_h) >= tft.height())
+      JpegDec.abort(); // Image has run off bottom of screen so abort decoding
   }
 
-  // calculate how long it took to draw the image
-  drawTime = millis() - drawTime; // Calculate the time it took
+  tft.setSwapBytes(swapBytes);
 }
 
 //====================================================================================
