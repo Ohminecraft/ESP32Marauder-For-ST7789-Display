@@ -174,12 +174,12 @@ void setup()
   #ifdef HAS_SCREEN
     digitalWrite(TFT_CS, HIGH);
   #endif
-  
+
   #ifdef HAS_SD
     pinMode(SD_CS, OUTPUT);
 
     delay(10);
-  
+    
     digitalWrite(SD_CS, HIGH);
 
     delay(10);
@@ -200,6 +200,13 @@ void setup()
     }
   #endif
 
+  #if defined(HAS_SD)
+    // Do some SD stuff
+      if(!sd_obj.initSD())
+        Serial.println(F("SD Card NOT Supported"));
+    #endif
+    delay(200);  
+
   #ifdef HAS_SCREEN
     display_obj.RunSetup();
     display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -208,20 +215,13 @@ void setup()
   backlightOff();
 
   // Draw the title screen
-  /*
   #ifdef HAS_SCREEN
-    #ifndef MARAUDER_MINI
-      display_obj.drawJpeg("/marauder3L.jpg", 0 , 0);     // 240 x 320 image
-    #else
-      display_obj.drawJpeg("/marauder3L.jpg", 0, 0);
-    #endif
-  #endif
-  */
-
-  #ifdef HAS_SCREEN
-    display_obj.tft.drawCentreString("ESP32 Marauder", TFT_WIDTH/2, TFT_HEIGHT * 0.33, 1);
-    display_obj.tft.drawCentreString("JustCallMeKoko", TFT_WIDTH/2, TFT_HEIGHT * 0.5, 1);
-    display_obj.tft.drawCentreString(display_obj.version_number, TFT_WIDTH/2, TFT_HEIGHT * 0.66, 1);
+    // Logo is look so cool idk why koko remove this logo
+    display_obj.drawJpeg(0, 0);
+    //display_obj.jpegRender(0, 0);
+    display_obj.tft.drawCentreString("ESP32 Marauder", TFT_WIDTH/2, TFT_HEIGHT * 0.13, 1);
+    display_obj.tft.drawCentreString("JustCallMeKoko", TFT_WIDTH/2, TFT_HEIGHT * 0.21, 1);
+    display_obj.tft.drawCentreString(display_obj.version_number, TFT_WIDTH/2, TFT_HEIGHT * 0.74, 1);
   #endif
 
 
@@ -263,16 +263,12 @@ void setup()
   //#endif
 
   buffer_obj = Buffer();
-  #if defined(HAS_SD)
-    // Do some SD stuff
-    if(!sd_obj.initSD())
-      Serial.println(F("SD Card NOT Supported"));
 
-  #endif
+  delay(2000);
 
   #ifdef HAS_SCREEN
     display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-    display_obj.tft.drawCentreString("Initializing...", TFT_WIDTH/2, TFT_HEIGHT * 0.82, 1);
+    display_obj.tft.drawCentreString("Initializing...", TFT_WIDTH/2, TFT_HEIGHT * 0.88, 1);
   #endif
 
   evil_portal_obj.setup();
