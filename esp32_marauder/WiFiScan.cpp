@@ -1698,7 +1698,7 @@ void WiFiScan::RunAPScan(uint8_t scan_mode, uint16_t color)
     
     #ifndef HAS_CYD_TOUCH
       #ifdef TFT_SHIELD
-        uint16_t calData[5] = { 391, 3491, 266, 3505, 7 }; // Landscape TFT Shield
+        uint16_t calData[5] = { 281, 3467, 429, 3248, 1 }; // Landscape TFT Shield
         Serial.println("Using TFT Shield");
       #else if defined(TFT_DIY)
         uint16_t calData[5] = { 213, 3469, 320, 3446, 1 }; // Landscape TFT DIY
@@ -2163,10 +2163,12 @@ void WiFiScan::RunInfo()
 
   Serial.println(free_ram);
 
+  display_obj.drawJpeg(0, SCREEN_HEIGHT / 4.5);
+
   #ifdef HAS_SCREEN
     display_obj.tft.setTextWrap(false);
     display_obj.tft.setFreeFont(NULL);
-    display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
+    display_obj.tft.setCursor(0, SCREEN_HEIGHT / 5);
     display_obj.tft.setTextSize(1);
     display_obj.tft.setTextColor(TFT_CYAN);
     display_obj.tft.println(text_table4[20]);
@@ -2274,7 +2276,7 @@ void WiFiScan::RunPacketMonitor(uint8_t scan_mode, uint16_t color)
       #ifdef HAS_SCREEN
         #ifndef HAS_CYD_TOUCH
           #ifdef TFT_SHIELD
-            uint16_t calData[5] = { 391, 3491, 266, 3505, 7 }; // Landscape TFT Shield
+            uint16_t calData[5] = { 281, 3467, 429, 3248, 1 }; // Landscape TFT Shield
             Serial.println("Using TFT Shield");
           #else if defined(TFT_DIY)
             uint16_t calData[5] = { 213, 3469, 320, 3446, 1 }; // Landscape TFT DIY
@@ -2395,7 +2397,7 @@ void WiFiScan::RunEapolScan(uint8_t scan_mode, uint16_t color)
     #ifdef HAS_SCREEN
       #ifndef HAS_CYD_TOUCH
         #ifdef TFT_SHIELD
-          uint16_t calData[5] = { 391, 3491, 266, 3505, 7 }; // Landscape TFT Shield
+          uint16_t calData[5] = { 281, 3467, 429, 3248, 1 }; // Landscape TFT Shield
           //Serial.println("Using TFT Shield");
         #else if defined(TFT_DIY)
           uint16_t calData[5] = { 213, 3469, 320, 3446, 1 }; // Landscape TFT DIY
