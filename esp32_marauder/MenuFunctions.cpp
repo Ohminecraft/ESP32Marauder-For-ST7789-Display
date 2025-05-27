@@ -1534,7 +1534,7 @@ void MenuFunctions::orientDisplay()
   #ifdef HAS_ST7789
     #ifndef HAS_CYD_TOUCH
       #ifdef TFT_SHIELD
-        uint16_t calData[5] = { 275, 3494, 361, 3528, 4 }; // tft.setRotation(0); // Portrait with TFT Shield
+        uint16_t calData[5] = { 456, 3220, 274, 3490, 2 }; // tft.setRotation(0); // Portrait with TFT Shield
       #else if defined(TFT_DIY)
         uint16_t calData[5] = { 339, 3470, 237, 3438, 2 }; // tft.setRotation(0); // Portrait with DIY TFT
       #endif
