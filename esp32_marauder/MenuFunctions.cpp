@@ -2496,7 +2496,6 @@ void MenuFunctions::RunSetup()
             #endif
           #endif
         #else
-          // By justcallmekoko (Original ESP32 Marauder)
             this->changeMenu(&sdDeleteMenu);
             bool deleting = true;
 
@@ -2520,58 +2519,45 @@ void MenuFunctions::RunSetup()
 
               int sd_file_index = 0;
 
-              // IDK The function can't show anything except status bar
-              //this->sdDeleteMenu.list->set(0, MenuNode{sd_obj.sd_files->get(sd_file_index), false, TFTCYAN, 0, NULL, true, NULL});
-              //this->buildButtons(&sdDeleteMenu);
+              this->sdDeleteMenu.list->set(0, MenuNode{sd_obj.sd_files->get(sd_file_index), false, TFTCYAN, 0, NULL, true, NULL});
+              this->buildButtons(&sdDeleteMenu);
               this->displayCurrentMenu();
-              display_obj.tft.setTextColor(TFTCYAN, TFT_BLACK);
-              display_obj.tft.setTextWrap(false);
-              display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-              display_obj.tft.setTextSize(1.5);
-              display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-              display_obj.tft.println(sd_obj.sd_files->get(sd_file_index));
 
               // Start button loop
               while(true) {
-                if (!this->disable_touch) pressed = display_obj.updateTouch(&t_x, &t_y);
-                uint8_t menu_button = display_obj.menuButton(&t_x, &t_y, pressed);
-                if (menu_button == UP_BUTTON) {
-                  if (sd_file_index > 0)
-                      sd_file_index--;
-                  else
-                    sd_file_index = sd_obj.sd_files->size() - 1;
+                #ifdef HAS_ST7789
+                  if (!this->disable_touch)
+                    pressed = display_obj.updateTouch(&t_x, &t_y);
+                #endif
 
-                  //this->sdDeleteMenu.list->set(0, MenuNode{sd_obj.sd_files->get(sd_file_index), false, TFTCYAN, 0, NULL, true, NULL});
-                  //this->buildButtons(&sdDeleteMenu);
-                this->displayCurrentMenu();
-                display_obj.tft.setTextColor(TFTCYAN, TFT_BLACK);
-                display_obj.tft.setTextWrap(false);
-                display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-                display_obj.tft.setTextSize(1.5);
-                display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-                display_obj.tft.println(sd_obj.sd_files->get(sd_file_index));
-                }
+                uint8_t menu_button = display_obj.menuButton(&t_x, &t_y, pressed);
+
+                #if !defined(MARAUDER_M5STICKC) || defined(MARAUDER_M5STICKCP2)
+                  if (menu_button == UP_BUTTON) {
+                    if (sd_file_index > 0)
+                      sd_file_index--;
+                    else
+                      sd_file_index = sd_obj.sd_files->size() - 1;
+
+                    this->sdDeleteMenu.list->set(0, MenuNode{sd_obj.sd_files->get(sd_file_index), false, TFTCYAN, 0, NULL, true, NULL});
+                    this->buildButtons(&sdDeleteMenu);
+                    this->displayCurrentMenu();
+                  }
+                #endif
                 if (menu_button == DOWN_BUTTON) {
                   if (sd_file_index < sd_obj.sd_files->size() - 1)
                     sd_file_index++;
                   else
                     sd_file_index = 0;
 
-                  //this->sdDeleteMenu.list->set(0, MenuNode{sd_obj.sd_files->get(sd_file_index), false, TFTCYAN, 0, NULL, true, NULL});
-                  //this->buildButtons(&sdDeleteMenu, 0, sd_obj.sd_files->get(sd_file_index));
+                  this->sdDeleteMenu.list->set(0, MenuNode{sd_obj.sd_files->get(sd_file_index), false, TFTCYAN, 0, NULL, true, NULL});
+                  this->buildButtons(&sdDeleteMenu, 0, sd_obj.sd_files->get(sd_file_index));
                   this->displayCurrentMenu();
-                  display_obj.tft.setTextColor(TFTCYAN, TFT_BLACK);
-                  display_obj.tft.setTextWrap(false);
-                  display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-                  display_obj.tft.setTextSize(1.5);
-                  display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-                  display_obj.tft.println(sd_obj.sd_files->get(sd_file_index));
                 }
                 if (menu_button == SELECT_BUTTON) {
                   if (sd_obj.sd_files->get(sd_file_index) != "Back") {
                     if (sd_obj.removeFile("/" + sd_obj.sd_files->get(sd_file_index)))
                       Serial.println("Successfully Removed File: /" + sd_obj.sd_files->get(sd_file_index));
-                      this->displayCurrentMenu();
                       display_obj.tft.setTextWrap(false);
                       display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
                       display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
@@ -2581,6 +2567,7 @@ void MenuFunctions::RunSetup()
                     this->changeMenu(sdDeleteMenu.parentMenu);
                     deleting = false;
                   }
+                  break;
                 }
               }
             }
@@ -2591,12 +2578,12 @@ void MenuFunctions::RunSetup()
 
   #ifdef HAS_SD
     //#ifndef HAS_ST7789
-      #ifdef HAS_BUTTONS
+      //#ifdef HAS_BUTTONS
         sdDeleteMenu.parentMenu = &deviceMenu;
         this->addNodes(&sdDeleteMenu, text09, TFTLIGHTGREY, NULL, 0, [this]() {
           this->changeMenu(sdDeleteMenu.parentMenu);
         });
-      #endif
+      //#endif
     //#endif
   #endif
 

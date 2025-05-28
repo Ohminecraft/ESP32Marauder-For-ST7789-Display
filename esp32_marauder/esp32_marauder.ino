@@ -221,20 +221,6 @@ void setup()
 
   backlightOff();
 
-  // Draw the title screen
-  //display_obj.tft.init();
-  /*
-  #ifdef HAS_SCREEN
-    #ifndef MARAUDER_MINI
-      display_obj.drawJpeg("/marauder3L.jpg", 0 , 0);     // 240 x 320 image
-    #else
-      display_obj.drawJpeg("/marauder3L.jpg", 0, 0);
-    #endif
-  #endif
-
-  delay(1300);
-  display_obj.clearScreen();
-  */
   #ifdef HAS_SCREEN
     display_obj.drawJpeg(0, 0);
     //display_obj.jpegRender(0, 0);
