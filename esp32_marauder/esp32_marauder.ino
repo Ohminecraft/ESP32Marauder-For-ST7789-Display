@@ -222,7 +222,6 @@ void setup()
   backlightOff();
 
   #ifdef HAS_SCREEN
-    // Logo is look so cool idk why koko remove this logo
     display_obj.drawJpeg(0, 0);
     //display_obj.jpegRender(0, 0);
     display_obj.tft.drawCentreString("ESP32 Marauder", TFT_WIDTH/2, TFT_HEIGHT * 0.13, 1);
