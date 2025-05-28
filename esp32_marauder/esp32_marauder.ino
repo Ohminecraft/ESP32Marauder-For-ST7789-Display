@@ -12,6 +12,8 @@ https://www.online-utility.org/image/convert/to/XBM
   #define Display_h
 #endif
 
+#define INIT_LED 2
+
 #include <WiFi.h>
 #include "EvilPortal.h"
 #include <Wire.h>
@@ -151,6 +153,8 @@ void setup()
 {
   esp_spiram_init();
 
+  pinMode(INIT_LED, OUTPUT);
+
   #ifdef defined(MARAUDER_M5STICKC) && !defined(MARAUDER_M5STICKCP2)
     axp192_obj.begin();
   #endif
@@ -200,6 +204,9 @@ void setup()
     }
   #endif
 
+
+  digitalWrite(INIT_LED, HIGH);
+
   #if defined(HAS_SD)
     // Do some SD stuff
       if(!sd_obj.initSD())
@@ -215,8 +222,20 @@ void setup()
   backlightOff();
 
   // Draw the title screen
+  //display_obj.tft.init();
+  /*
   #ifdef HAS_SCREEN
-    // Logo is look so cool idk why koko remove this logo
+    #ifndef MARAUDER_MINI
+      display_obj.drawJpeg("/marauder3L.jpg", 0 , 0);     // 240 x 320 image
+    #else
+      display_obj.drawJpeg("/marauder3L.jpg", 0, 0);
+    #endif
+  #endif
+
+  delay(1300);
+  display_obj.clearScreen();
+  */
+  #ifdef HAS_SCREEN
     display_obj.drawJpeg(0, 0);
     //display_obj.jpegRender(0, 0);
     display_obj.tft.drawCentreString("ESP32 Marauder", TFT_WIDTH/2, TFT_HEIGHT * 0.13, 1);
@@ -332,6 +351,8 @@ void setup()
   
   Serial.println(F("CLI Ready"));
   cli_obj.RunSetup();
+
+  digitalWrite(INIT_LED, LOW);
 }
 
 
