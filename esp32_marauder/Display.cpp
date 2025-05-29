@@ -423,6 +423,13 @@ void Display::processAndPrintString(TFT_eSPI& tft, const String& originalString)
   tft.print(new_string);
 }
 
+bool checkMem() {
+  if (esp_get_free_heap_size() <= MEM_LOWER_LIM)
+    return false;
+  else
+    return true;
+}
+
 void Display::displayBuffer(bool do_clear)
 {
   if (this->display_buffer->size() > 0)
@@ -440,25 +447,32 @@ void Display::displayBuffer(bool do_clear)
           yDraw = scroll_line(TFT_RED);
           tft.setCursor(xPos, yDraw);
           uint16_t text_color = TFT_GREEN;
-          String new_string = display_buffer->shift();
-          if (new_string.startsWith(RED_KEY)) {
-            text_color = TFT_RED;
-            new_string.remove(0, strlen(RED_KEY)); // Remove the macro
-          } else if (new_string.startsWith(GREEN_KEY)) {
-            text_color = TFT_GREEN;
-            new_string.remove(0, strlen(GREEN_KEY)); // Remove the macro
-          } else if (new_string.startsWith(CYAN_KEY)) {
-            text_color = TFT_CYAN;
-            new_string.remove(0, strlen(CYAN_KEY)); // Remove the macro
-          } else if (new_string.startsWith(WHITE_KEY)) {
-            text_color = TFT_WHITE;
-            new_string.remove(0, strlen(WHITE_KEY)); // Remove the macro
-          } else if (new_string.startsWith(MAGENTA_KEY)) {
-            text_color = TFT_MAGENTA;
-            new_string.remove(0, strlen(MAGENTA_KEY)); // Remove the macro
+          bool check_mem = checkMem();
+          if (check_mem) {
+            String new_string = display_buffer->shift();
+            if (new_string.startsWith(RED_KEY)) {
+              text_color = TFT_RED;
+              new_string.remove(0, strlen(RED_KEY)); // Remove the macro
+            } else if (new_string.startsWith(GREEN_KEY)) {
+              text_color = TFT_GREEN;
+              new_string.remove(0, strlen(GREEN_KEY)); // Remove the macro
+            } else if (new_string.startsWith(CYAN_KEY)) {
+              text_color = TFT_CYAN;
+              new_string.remove(0, strlen(CYAN_KEY)); // Remove the macro
+            } else if (new_string.startsWith(WHITE_KEY)) {
+              text_color = TFT_WHITE;
+              new_string.remove(0, strlen(WHITE_KEY)); // Remove the macro
+            } else if (new_string.startsWith(MAGENTA_KEY)) {
+              text_color = TFT_MAGENTA;
+              new_string.remove(0, strlen(MAGENTA_KEY)); // Remove the macro
+            }
+            tft.setTextColor(text_color, TFT_BLACK);
+            tft.print(new_string);
+          } else {
+            String mem_limit = "==========Memory limit reached==========";
+            tft.setTextColor(TFT_RED, TFT_BLACK);
+            tft.print(mem_limit);
           }
-          tft.setTextColor(text_color, TFT_BLACK);
-          tft.print(new_string);
           printing = false;
           delay(print_delay_2);
         }
