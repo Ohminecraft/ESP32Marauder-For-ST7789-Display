@@ -430,17 +430,6 @@ bool checkMem() {
     return true;
 }
 
-String insertNewLines(String msg, int lineLength) {
-  String result = "";
-  for (int i = 0; i < msg.length(); i++) {
-    result += msg[i];
-    if ((i + 1) % lineLength == 0) {
-      result += "\n";
-    }
-  }
-  return result;
-}
-
 void Display::displayBuffer(bool do_clear)
 {
   if (this->display_buffer->size() > 0)
