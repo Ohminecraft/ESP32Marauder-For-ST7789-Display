@@ -7528,7 +7528,7 @@ void WiFiScan::main(uint32_t currentTime)
     for (int i = 0; i < ssids->size(); i++) {
       this->broadcastCustomBeacon(currentTime, ssids->get(i));
       total_list_ap++;
-      if (total_list_ap <= 3 && total_list_ap != 0) {
+      if (total_list_ap <= 2 && total_list_ap != 0) {
         if (total_list_ap != 1)
           displayString4.concat(", ");
         displayString4.concat(ssids->get(i).essid);
