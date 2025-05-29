@@ -3578,12 +3578,7 @@ void WiFiScan::apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type
         Serial.print(" ");
 
         #ifdef HAS_SCREEN
-          if (wifi_scan_obj.checkMem())
-            display_obj.display_buffer->add(display_string);
-          else {
-            String warning_str = "Mem limit reached " + display_string;
-            display_obj.display_buffer->add(warning_str);
-          }
+          display_obj.display_buffer->add(display_string);
         #endif
         
         if (essid == "") {
@@ -4523,12 +4518,7 @@ void WiFiScan::stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t typ
 
     Serial.print(" ");
 
-    if (mem_check)
-      display_obj.display_buffer->add(display_string);
-    else {
-      String warning_str = "Memory lim reached " + display_string;
-      display_obj.display_buffer->add(warning_str);
-    }
+    display_obj.display_buffer->add(display_string);
   #endif
 
   // Add station index to AP in list
@@ -6439,6 +6429,14 @@ void WiFiScan::main(uint32_t currentTime)
   else if (currentScanMode == WIFI_ATTACK_AUTH) {
     for (int i = 0; i < 55; i++)
       this->sendProbeAttack(currentTime);
+    
+    int total_selected_ap = 0;
+    String displayString3 = "";
+    displayString3.concat("Total AP Selected: ");
+    for (int i = 0; i < access_points->size(); i++) {
+      if (access_points->get(i).selected) total_selected_ap++;
+    }
+    displayString3.concat(total_selected_ap);
 
     if (currentTime - initTime >= 1000) {
       initTime = millis();
@@ -6449,7 +6447,9 @@ void WiFiScan::main(uint32_t currentTime)
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString3);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
       #endif
@@ -6460,6 +6460,14 @@ void WiFiScan::main(uint32_t currentTime)
     for (int i = 0; i < 55; i++)
       this->sendDeauthAttack(currentTime, this->dst_mac);
 
+    int total_selected_ap = 0;
+    String displayString3 = "";
+    displayString3.concat("Total AP Selected: ");
+    for (int i = 0; i < access_points->size(); i++) {
+      if (access_points->get(i).selected) total_selected_ap++;
+    }
+    displayString3.concat(total_selected_ap);
+
     if (currentTime - initTime >= 1000) {
       initTime = millis();
       String displayString = "";
@@ -6469,7 +6477,9 @@ void WiFiScan::main(uint32_t currentTime)
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString3);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
       #endif
@@ -6480,6 +6490,14 @@ void WiFiScan::main(uint32_t currentTime)
     for (int i = 0; i < 55; i++)
       this->sendDeauthFrame(this->src_mac, this->set_channel, this->dst_mac);
 
+    int total_selected_ap = 0;
+    String displayString3 = "";
+    displayString3.concat("Total AP Selected: ");
+    for (int i = 0; i < access_points->size(); i++) {
+      if (access_points->get(i).selected) total_selected_ap++;
+    }
+    displayString3.concat(total_selected_ap);
+
     if (currentTime - initTime >= 1000) {
       initTime = millis();
       String displayString = "";
@@ -6489,7 +6507,9 @@ void WiFiScan::main(uint32_t currentTime)
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString3);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
       #endif
@@ -6498,54 +6518,79 @@ void WiFiScan::main(uint32_t currentTime)
   }
   else if (currentScanMode == WIFI_ATTACK_DEAUTH_TARGETED) {
     // Loop through each AP
+    String displayString3 = "";
+    String displayString4 = "";
+    int total_ap_selected = 0;
+    int total_sta_mac_selected = 0;
+    displayString4.concat("Total Station Mac Selected: ");
+    displayString3.concat("Total AP Selected: ");
     for (int x = 0; x < access_points->size(); x++) {
       // Only get selected APs
       if (access_points->get(x).selected) {
         AccessPoint cur_ap = access_points->get(x);
+        total_ap_selected++;
         // Loop through each AP's Station
         for (int i = 0; i < cur_ap.stations->size(); i++) {
           // Only get selected Stations
           if (stations->get(cur_ap.stations->get(i)).selected) {
             Station cur_sta = stations->get(cur_ap.stations->get(i));
+            //char macStr[18];
+            //sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X",
+            //        cur_sta.mac[0], cur_sta.mac[1], cur_sta.mac[2],
+            //        cur_sta.mac[3], cur_sta.mac[4], cur_sta.mac[5]);
+            //displayString4.concat(macStr);
+            total_sta_mac_selected++;
 
             // Send deauths for each selected AP's selected Station
             for (int y = 0; y < 25; y++)
               this->sendDeauthFrame(cur_ap.bssid, cur_ap.channel, cur_sta.mac);
-
-            // Display packets sent on screen
-            if (currentTime - initTime >= 1000) {
-              initTime = millis();
-              String displayString = "";
-              String displayString2 = "";
-              displayString.concat(text18);
-              displayString.concat(packets_sent);
-              for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
-                displayString2.concat(" ");
-              #ifdef HAS_SCREEN
-                display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-                display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
-                display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
-              #endif
-              packets_sent = 0;
-            }
           }
         }
       }
     }
-  }
+
+    displayString3.concat(total_ap_selected);
+    displayString4.concat(total_sta_mac_selected);
+    // Display packets sent on screen
+    if (currentTime - initTime >= 1000) {
+      initTime = millis();
+      String displayString = "";
+      String displayString2 = "";
+      displayString.concat(text18);
+      displayString.concat(packets_sent);
+      for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
+        displayString2.concat(" ");
+      #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
+        display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString3);
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 2.6);
+        display_obj.tft.println(displayString4);
+        display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
+        display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
+      #endif
+      packets_sent = 0;
+    }
+  } 
   else if ((currentScanMode == WIFI_ATTACK_MIMIC)) {
     // Need this for loop because getTouch causes ~10ms delay
     // which makes beacon spam less effective
+    String displayString3 = "";
+    int total_ap_selected = 0;
+    displayString3.concat("Total AP Selected: ");
     for (int i = 0; i < access_points->size(); i++) {
-      if (access_points->get(i).selected)
+      if (access_points->get(i).selected) {
         this->broadcastCustomBeacon(currentTime, ssid{access_points->get(i).essid, random(1, 12), {random(256), 
                                                                                                    random(256),
                                                                                                    random(256),
                                                                                                    random(256),
                                                                                                    random(256),
                                                                                                    random(256)}});
+        total_ap_selected++;
+      }
     }
-      
+    
+    displayString3.concat(total_ap_selected);
 
     if (currentTime - initTime >= 1000)
     {
@@ -6559,7 +6604,9 @@ void WiFiScan::main(uint32_t currentTime)
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString3);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
       #endif
@@ -6580,11 +6627,17 @@ void WiFiScan::main(uint32_t currentTime)
       //Serial.println(packets_sent);
       String displayString = "";
       String displayString2 = "";
+      String displayString3 = "";
+      displayString3.concat("/!\\ FUCK IT!! /!\\");
       displayString.concat(text18);
       displayString.concat(packets_sent);
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setTextSize(2);
+        display_obj.tft.setTextColor(TFT_RED, TFT_BLACK);
+        display_obj.showCenterText(displayString3, TFT_HEIGHT / 3);
+        display_obj.tft.setTextSize(1);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
@@ -6593,8 +6646,15 @@ void WiFiScan::main(uint32_t currentTime)
     }
   }
   else if ((currentScanMode == WIFI_ATTACK_BEACON_LIST)) {
-    for (int i = 0; i < ssids->size(); i++)
+    String displayString3 = "";
+    int total_list_ap = 0;
+    displayString3.concat("Total AP Name From List: ");
+
+    for (int i = 0; i < ssids->size(); i++) {
       this->broadcastCustomBeacon(currentTime, ssids->get(i));
+      total_list_ap++;
+    }
+    displayString3.concat(total_list_ap);
 
     if (currentTime - initTime >= 1000)
     {
@@ -6606,7 +6666,9 @@ void WiFiScan::main(uint32_t currentTime)
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString3);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
       #endif
@@ -6614,13 +6676,30 @@ void WiFiScan::main(uint32_t currentTime)
     }
   }
   else if ((currentScanMode == WIFI_ATTACK_AP_SPAM)) {
+    String displayString = "";
+    int total_ap_selected = 0;
+    displayString.concat("Total AP Selected: ");
+
     for (int i = 0; i < access_points->size(); i++) {
-      if (access_points->get(i).selected)
+      if (access_points->get(i).selected) {
         this->broadcastCustomBeacon(currentTime, access_points->get(i));
+        total_ap_selected++;
+      }
     }
+
+    displayString.concat(total_ap_selected);
 
     if (currentTime - initTime >= 1000) {
       initTime = millis();
+      String displayString2 = "";
+      for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
+        displayString2.concat(" ");
+      #ifdef HAS_SCREEN
+        display_obj.tft.setCursor(18, TFT_HEIGHT / 3);
+        display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        display_obj.tft.println(displayString);
+        display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
+      #endif
       packets_sent = 0;
     }
   }
@@ -6643,11 +6722,17 @@ void WiFiScan::main(uint32_t currentTime)
       //Serial.println(packets_sent);
       String displayString = "";
       String displayString2 = "";
+      String displayString3 = "";
+      displayString3.concat("RICK ROLL!!");
       displayString.concat(text18);
       displayString.concat(packets_sent);
       for (int x = 0; x < STANDARD_FONT_CHAR_LIMIT; x++)
         displayString2.concat(" ");
       #ifdef HAS_SCREEN
+        display_obj.tft.setTextSize(2);
+        display_obj.tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+        display_obj.showCenterText(displayString3, TFT_HEIGHT / 3);
+        display_obj.tft.setTextSize(1);
         display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
         display_obj.showCenterText(displayString2, TFT_HEIGHT / 2);
         display_obj.showCenterText(displayString, TFT_HEIGHT / 2);
